@@ -9,13 +9,23 @@ user_states = {}
 
 def main_keyboard():
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+    
+    # Birinchi qatorlar (Sanoq sistemalari)
     item1 = types.KeyboardButton("⬅️ 2-likdan")
     item2 = types.KeyboardButton("⬅️ 8-likdan")
     item3 = types.KeyboardButton("⬅️ 10-likdan")
     item4 = types.KeyboardButton("⬅️ 16-likdan")
-    item5 = types.KeyboardButton("🧮 Kalkulyator")
-    item6 = types.KeyboardButton("📞 Biz bilan bog'lanish")
-    markup.add(item1, item2, item3, item4, item5, item6)
+    
+    # Ikkinchi qatorda Kalkulyator
+    item_calc = types.KeyboardButton("🧮 Kalkulyator")
+    
+    # Uchinchi qatorda Bog'lanish (Katta)
+    item_contact = types.KeyboardButton("📞 Biz bilan bog'lanish")
+    
+    # Tugmalarni joylashtirish
+    markup.add(item1, item2, item3, item4)
+    markup.row(item_calc)    # Kalkulyator alohida qatorda
+    markup.row(item_contact) # Bog'lanish eng pastda alohida qatorda
     return markup
 
 def convert_keyboard(exclude_base):
@@ -41,15 +51,22 @@ def handle_message(message):
         bot.send_message(chat_id, "Asosiy menyu:", reply_markup=main_keyboard())
         
     elif "likdan" in text:
-        base = text.split("-")[0].replace("⬅️ ", "")
-        user_states[chat_id] = {'from': int(base)}
-        bot.send_message(chat_id, f"{base}-likdan qaysi biriga o'tkazamiz?", reply_markup=convert_keyboard(base))
+        try:
+            base_str = text.split("-")[0].replace("⬅️ ", "")
+            base = int(base_str)
+            user_states[chat_id] = {'from': base}
+            bot.send_message(chat_id, f"{base}-likdan qaysi biriga o'tkazamiz?", reply_markup=convert_keyboard(base_str))
+        except:
+            bot.send_message(chat_id, "Xato yuz berdi, qaytadan urinib ko'ring.")
 
     elif "likka ➡️" in text:
-        target = text.split("-")[0]
-        if chat_id in user_states:
-            user_states[chat_id]['to'] = int(target)
-            bot.send_message(chat_id, f"Endi {user_states[chat_id]['from']}-likdagi sonni kiriting:", reply_markup=types.ReplyKeyboardRemove())
+        try:
+            target = text.split("-")[0]
+            if chat_id in user_states:
+                user_states[chat_id]['to'] = int(target)
+                bot.send_message(chat_id, f"Endi {user_states[chat_id]['from']}-likdagi sonni kiriting:", reply_markup=types.ReplyKeyboardRemove())
+        except:
+            bot.send_message(chat_id, "Xato yuz berdi.")
 
     elif chat_id in user_states and 'to' in user_states[chat_id]:
         try:
@@ -68,9 +85,13 @@ def handle_message(message):
             bot.send_message(chat_id, f"✅ Natija: {res}", reply_markup=main_keyboard())
             user_states.pop(chat_id, None)
         except:
-            bot.send_message(chat_id, "Xato kiritdingiz! Iltimos, sonni tekshiring.")
+            bot.send_message(chat_id, "Xato kiritdingiz! Iltimos, tanlangan sanoq sistemasiga mos son kiriting.")
+
+    elif text == "🧮 Kalkulyator":
+        bot.send_message(chat_id, "Kalkulyator tez kunda ishga tushadi, akajon!")
 
     elif text == "📞 Biz bilan bog'lanish":
-        bot.send_message(chat_id, "Admin: @Sizning_Username")
+        bot.send_message(chat_id, "Admin: @Sizning_Username\nSavollaringiz bo'lsa yozishingiz mumkin!")
 
-bot.infinity_polling()
+if __name__ == "__main__":
+    bot.infinity_polling()
